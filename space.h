@@ -19,11 +19,15 @@ class Space
     unsigned int width;
     unsigned int height;
     int error_code;
+    float yRot;
+    float xTrans;
+    float yTrans;
     SDL_Window* display;
     SDL_Event event;
     SDL_GLContext context;
     GLuint vertexBuffers[1];
     GLuint vertexArrays[1];
+    GLuint indexBuffers[1];
     Shader shader;
     protected:
         int Init();

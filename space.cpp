@@ -1,13 +1,37 @@
 #include "space.h"
 
-const GLfloat triangle[3][7] = {
-    {0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0},
-    {-0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0},
-    {0.0, 0.5, 0.0, 0.0, 0.0, 1.0, 1.0}
+const GLfloat cube[8][7] = {
+    {-0.5,-0.5,-0.5, 1.0, 0.0, 0.0, 1.0},
+    { 0.5,-0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5, 0.5,-0.5, 0.0, 1.0, 0.0, 1.0},
+    {-0.5, 0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5,-0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
+    {-0.5,-0.5, 0.5, 1.0, 0.0, 0.0, 1.0},
+    {-0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0}
+};
+
+const GLubyte indices[36] = {
+    0, 1, 2, 2, 3, 0,
+    1, 4, 7, 7, 2, 1,
+    4, 5, 6, 6, 7, 4,
+    5, 0, 3, 3, 6, 5,
+    6, 3, 2, 2, 7, 6,
+    0, 5, 4, 4, 1, 0
+};
+
+GLfloat matrix[4][4] = {
+    {1.0, 0.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0, 0.0},
+    {0.0, 0.0, 1.0, 0.0},
+    {0.0, 0.0, 0.0, 1.0}
 };
 
 Space::Space()
 {
+    yRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
     width = 640;
     height = 480;
     error_code = Init();
@@ -15,6 +39,9 @@ Space::Space()
 
 Space::Space(unsigned int w, unsigned int h)
 {
+    yRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
     width = w;
     height = h;
     error_code = Init();
@@ -104,26 +131,55 @@ unsigned short int Space::HandleEvents()
 void Space::LoadBuffer()
 {
     glGenBuffers(1, vertexBuffers);
+    glGenBuffers(1, indexBuffers);
     glGenVertexArrays(1, vertexArrays);
 
-    glBindVertexArray(vertexArrays[0]);
-
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, 3 * 7 * sizeof(GLfloat), triangle, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (const GLvoid*) (3 * sizeof(GLfloat)));
+    glBufferData(GL_ARRAY_BUFFER, 8 * 7 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLubyte), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(vertexArrays[0]);
 
     shader.UseProgram();
 }
 
 void Space::Render()
 {
+    yRot += 0.04;
+    if (2 * M_PI <= yRot) {
+        yRot = 0.0;
+    }
+    xTrans += 0.01;
+    if (2 * M_PI <= xTrans) {
+        xTrans = 0.0;
+    }
+    yTrans += 0.04;
+    if (2 * M_PI <= yTrans) {
+        yTrans = 0.0;
+    }
+    matrix[0][3] = 0.5 * std::cos(xTrans);
+    matrix[1][3] = 0.5 * std::sin(yTrans);
+    matrix[0][0] = std::cos(yRot);
+    matrix[0][2] = -std::sin(yRot);
+    matrix[2][0] = std::sin(yRot);
+    matrix[2][2] = std::cos(yRot);
+
+    shader.Transform(matrix);
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), 0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (const GLvoid*) (3 * sizeof(GLfloat)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
+
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);

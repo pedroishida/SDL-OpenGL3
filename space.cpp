@@ -29,21 +29,35 @@ GLfloat matrix[4][4] = {
 
 Space::Space()
 {
-    yRot = 0.0;
-    xTrans = 0.0;
-    yTrans = 0.0;
     width = 640;
     height = 480;
+    aspectRatio = width * (1.0 / height);
+    fieldOfView = M_PI / 4;
+    zNear = 0.0;
+    zFar = 10.0;
+    xRot = 0.0;
+    yRot = 0.0;
+    zRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
+    zTrans = 5.0;
     error_code = Init();
 }
 
 Space::Space(unsigned int w, unsigned int h)
 {
-    yRot = 0.0;
-    xTrans = 0.0;
-    yTrans = 0.0;
     width = w;
     height = h;
+    aspectRatio = width * (1.0 / height);
+    fieldOfView = M_PI / 4;
+    zNear = -2.0;
+    zFar = 2.0;
+    xRot = 0.0;
+    yRot = 0.0;
+    zRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
+    zTrans = 5.0;
     error_code = Init();
 }
 
@@ -105,6 +119,9 @@ int Space::Init()
 
     glClearColor(0.0f, 0.0f, 0.05f, 0.0f);
 
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
     if (!shader.Init("main.vert", "main.frag")) {
         return 3;
     }
@@ -147,24 +164,7 @@ void Space::LoadBuffer()
 
 void Space::Render()
 {
-    yRot += 0.04;
-    if (2 * M_PI <= yRot) {
-        yRot = 0.0;
-    }
-    xTrans += 0.01;
-    if (2 * M_PI <= xTrans) {
-        xTrans = 0.0;
-    }
-    yTrans += 0.04;
-    if (2 * M_PI <= yTrans) {
-        yTrans = 0.0;
-    }
-    matrix[0][3] = 0.5 * std::cos(xTrans);
-    matrix[1][3] = 0.5 * std::sin(yTrans);
-    matrix[0][0] = std::cos(yRot);
-    matrix[0][2] = -std::sin(yRot);
-    matrix[2][0] = std::sin(yRot);
-    matrix[2][2] = std::cos(yRot);
+    CalculateWorldMatrix();
 
     shader.Transform(matrix);
 
@@ -200,4 +200,60 @@ void Space::Quit()
 int Space::GetError()
 {
     return error_code;
+}
+
+void Space::CalculateWorldMatrix()
+{
+    static float t = 0.0;
+    float tanFOV = std::tan(fieldOfView / 2);
+    float rtanFOV = aspectRatio * tanFOV;
+    float cosX = std::cos(xRot);
+    float sinX = std::sin(xRot);
+    float cosY = std::cos(yRot);
+    float sinY = std::sin(yRot);
+    float cosZ = std::cos(zRot);
+    float sinZ = std::sin(zRot);
+    float dz = zNear - zFar;
+    float A = (- zNear - zFar) / dz;
+    float B = (2 * zNear * zFar) / dz;
+
+    xRot += 0.04;
+    if (2 * M_PI <= xRot) {
+        xRot = 0.0;
+    }
+    yRot += 0.02;
+    if (2 * M_PI <= yRot) {
+        yRot = 0.0;
+    }
+    zRot += 0.01;
+    if (2 * M_PI <= zRot) {
+        zRot = 0.0;
+    }
+
+    t += 0.01;
+    if (2 * M_PI <= t) {
+        t = 0.0;
+    }
+    xTrans = 0.875 * std::sin(t) + 0.5 * std::cos(6 * t);
+    yTrans = 0.875 * std::cos(t) - 0.5 * std::sin(6 * t);
+
+    matrix[0][0] = cosX * cosY / rtanFOV;
+    matrix[0][1] = - sinX * cosY / rtanFOV;
+    matrix[0][2] = - sinY / rtanFOV;
+    matrix[0][3] = xTrans / rtanFOV;
+
+    matrix[1][0] = (sinX * cosZ - cosX * sinY * sinZ) / tanFOV;
+    matrix[1][1] = (cosX * cosZ + sinX * sinY * sinZ) / tanFOV;
+    matrix[1][2] = - cosY * sinZ / tanFOV;
+    matrix[1][3] = yTrans / tanFOV;
+
+    matrix[2][0] = A * (cosX * sinY * cosZ + sinX * sinZ);
+    matrix[2][1] = A * (cosX * sinZ - sinX * sinY * cosZ);
+    matrix[2][2] = A * cosY * cosZ;
+    matrix[2][3] = B + A * zTrans;
+
+    matrix[3][0] = cosX * sinY * cosZ + sinX * sinZ;
+    matrix[3][1] = cosX * sinZ - sinX * sinY * cosZ;
+    matrix[3][2] = cosY * cosZ;
+    matrix[3][3] = zTrans;
 }

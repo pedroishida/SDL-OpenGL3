@@ -19,9 +19,15 @@ class Space
     unsigned int width;
     unsigned int height;
     int error_code;
+    float aspectRatio;
+    float fieldOfView;
+    float zNear, zFar;
+    float xRot;
     float yRot;
+    float zRot;
     float xTrans;
     float yTrans;
+    float zTrans;
     SDL_Window* display;
     SDL_Event event;
     SDL_GLContext context;
@@ -32,6 +38,7 @@ class Space
     protected:
         int Init();
         void Quit();
+        void CalculateWorldMatrix();
     public:
         Space();
         Space(unsigned int, unsigned int);

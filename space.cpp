@@ -1,15 +1,46 @@
 #include "space.h"
 
-const GLfloat triangle[3][7] = {
-    {0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 1.0},
-    {-0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0},
-    {0.0, 0.5, 0.0, 0.0, 0.0, 1.0, 1.0}
+const GLfloat cube[8][7] = {
+    {-0.5,-0.5,-0.5, 1.0, 0.0, 0.0, 1.0},
+    { 0.5,-0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5, 0.5,-0.5, 0.0, 1.0, 0.0, 1.0},
+    {-0.5, 0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5,-0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
+    {-0.5,-0.5, 0.5, 1.0, 0.0, 0.0, 1.0},
+    {-0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
+    { 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0}
+};
+
+const GLubyte indices[36] = {
+    0, 1, 2, 2, 3, 0,
+    1, 4, 7, 7, 2, 1,
+    4, 5, 6, 6, 7, 4,
+    5, 0, 3, 3, 6, 5,
+    6, 3, 2, 2, 7, 6,
+    0, 5, 4, 4, 1, 0
+};
+
+GLfloat matrix[4][4] = {
+    {1.0, 0.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0, 0.0},
+    {0.0, 0.0, 1.0, 0.0},
+    {0.0, 0.0, 0.0, 1.0}
 };
 
 Space::Space()
 {
     width = 640;
     height = 480;
+    aspectRatio = width * (1.0 / height);
+    fieldOfView = M_PI / 4;
+    zNear = 0.0;
+    zFar = 10.0;
+    xRot = 0.0;
+    yRot = 0.0;
+    zRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
+    zTrans = 5.0;
     error_code = Init();
 }
 
@@ -17,6 +48,16 @@ Space::Space(unsigned int w, unsigned int h)
 {
     width = w;
     height = h;
+    aspectRatio = width * (1.0 / height);
+    fieldOfView = M_PI / 4;
+    zNear = -2.0;
+    zFar = 2.0;
+    xRot = 0.0;
+    yRot = 0.0;
+    zRot = 0.0;
+    xTrans = 0.0;
+    yTrans = 0.0;
+    zTrans = 5.0;
     error_code = Init();
 }
 
@@ -78,6 +119,9 @@ int Space::Init()
 
     glClearColor(0.0f, 0.0f, 0.05f, 0.0f);
 
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
     if (!shader.Init("main.vert", "main.frag")) {
         return 3;
     }
@@ -104,26 +148,38 @@ unsigned short int Space::HandleEvents()
 void Space::LoadBuffer()
 {
     glGenBuffers(1, vertexBuffers);
+    glGenBuffers(1, indexBuffers);
     glGenVertexArrays(1, vertexArrays);
 
-    glBindVertexArray(vertexArrays[0]);
-
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, 3 * 7 * sizeof(GLfloat), triangle, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (const GLvoid*) (3 * sizeof(GLfloat)));
+    glBufferData(GL_ARRAY_BUFFER, 8 * 7 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLubyte), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(vertexArrays[0]);
 
     shader.UseProgram();
 }
 
 void Space::Render()
 {
+    CalculateWorldMatrix();
+
+    shader.Transform(matrix);
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), 0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (const GLvoid*) (3 * sizeof(GLfloat)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
+
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, 0);
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
@@ -144,4 +200,60 @@ void Space::Quit()
 int Space::GetError()
 {
     return error_code;
+}
+
+void Space::CalculateWorldMatrix()
+{
+    static float t = 0.0;
+    float tanFOV = std::tan(fieldOfView / 2);
+    float rtanFOV = aspectRatio * tanFOV;
+    float cosX = std::cos(xRot);
+    float sinX = std::sin(xRot);
+    float cosY = std::cos(yRot);
+    float sinY = std::sin(yRot);
+    float cosZ = std::cos(zRot);
+    float sinZ = std::sin(zRot);
+    float dz = zNear - zFar;
+    float A = (- zNear - zFar) / dz;
+    float B = (2 * zNear * zFar) / dz;
+
+    xRot += 0.04;
+    if (2 * M_PI <= xRot) {
+        xRot = 0.0;
+    }
+    yRot += 0.02;
+    if (2 * M_PI <= yRot) {
+        yRot = 0.0;
+    }
+    zRot += 0.01;
+    if (2 * M_PI <= zRot) {
+        zRot = 0.0;
+    }
+
+    t += 0.01;
+    if (2 * M_PI <= t) {
+        t = 0.0;
+    }
+    xTrans = 0.875 * std::sin(t) + 0.5 * std::cos(6 * t);
+    yTrans = 0.875 * std::cos(t) - 0.5 * std::sin(6 * t);
+
+    matrix[0][0] = cosX * cosY / rtanFOV;
+    matrix[0][1] = - sinX * cosY / rtanFOV;
+    matrix[0][2] = - sinY / rtanFOV;
+    matrix[0][3] = xTrans / rtanFOV;
+
+    matrix[1][0] = (sinX * cosZ - cosX * sinY * sinZ) / tanFOV;
+    matrix[1][1] = (cosX * cosZ + sinX * sinY * sinZ) / tanFOV;
+    matrix[1][2] = - cosY * sinZ / tanFOV;
+    matrix[1][3] = yTrans / tanFOV;
+
+    matrix[2][0] = A * (cosX * sinY * cosZ + sinX * sinZ);
+    matrix[2][1] = A * (cosX * sinZ - sinX * sinY * cosZ);
+    matrix[2][2] = A * cosY * cosZ;
+    matrix[2][3] = B + A * zTrans;
+
+    matrix[3][0] = cosX * sinY * cosZ + sinX * sinZ;
+    matrix[3][1] = cosX * sinZ - sinX * sinY * cosZ;
+    matrix[3][2] = cosY * cosZ;
+    matrix[3][3] = zTrans;
 }

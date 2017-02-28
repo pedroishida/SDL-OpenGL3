@@ -48,6 +48,8 @@ bool Shader::Init(const char *vertexFilename, const char *fragmentFilename)
         return false;
     }
 
+    worldLocation = glGetUniformLocation(program, "world");
+
     return true;
 }
 
@@ -113,4 +115,11 @@ void Shader::Clean()
     glDeleteProgram(program);
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+}
+
+void Shader::Transform(float matrix[4][4])
+{
+    if (0xFFFFFFFF != worldLocation) {
+        glUniformMatrix4fv(worldLocation, 1, GL_TRUE, &matrix[0][0]);
+    }
 }

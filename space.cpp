@@ -1,23 +1,51 @@
 #include "space.h"
 
-const GLfloat cube[8][7] = {
-    {-0.5,-0.5,-0.5, 1.0, 0.0, 0.0, 1.0},
-    { 0.5,-0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
-    { 0.5, 0.5,-0.5, 0.0, 1.0, 0.0, 1.0},
-    {-0.5, 0.5,-0.5, 0.0, 0.0, 1.0, 1.0},
-    { 0.5,-0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
-    {-0.5,-0.5, 0.5, 1.0, 0.0, 0.0, 1.0},
-    {-0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0},
-    { 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0}
+const GLfloat cube[24][10] = {
+    //front face
+    {-0.5,-0.5,-0.5, 0.0, 0.0,-1.0, 1.0, 1.0, 1.0, 1.0},//0: front bottom left
+    { 0.5,-0.5,-0.5, 0.0, 0.0,-1.0, 1.0, 1.0, 1.0, 1.0},//1: front bottom right
+    { 0.5, 0.5,-0.5, 0.0, 0.0,-1.0, 1.0, 1.0, 1.0, 1.0},//2: front top right
+    {-0.5, 0.5,-0.5, 0.0, 0.0,-1.0, 1.0, 1.0, 1.0, 1.0},//3: front top left
+    //left face
+    {-0.5,-0.5, 0.5,-1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0},//4: back bottom left
+    {-0.5,-0.5,-0.5,-1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0},//5: front bottom left
+    {-0.5, 0.5,-0.5,-1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0},//6: front top left
+    {-0.5, 0.5, 0.5,-1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0},//7: back top left
+    //back face
+    { 0.5,-0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0},//8: back bottom right
+    {-0.5,-0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0},//9: back bottom left
+    {-0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0},//10: back top left
+    { 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0},//11: back top right
+    //right face
+    { 0.5,-0.5,-0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},//12: front bottom right
+    { 0.5,-0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},//13: back bottom right
+    { 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},//14: back top right
+    { 0.5, 0.5,-0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0},//15: front top right
+    //top face
+    {-0.5, 0.5,-0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0},//16: front top left
+    { 0.5, 0.5,-0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0},//17: front top right
+    { 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0},//18: back top right
+    {-0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0},//19: back top left
+    //bottom face
+    {-0.5,-0.5, 0.5, 0.0,-1.0, 0.0, 1.0, 0.5, 0.0, 1.0},//20: back bottom left
+    { 0.5,-0.5, 0.5, 0.0,-1.0, 0.0, 1.0, 0.5, 0.0, 1.0},//21: back bottom right
+    { 0.5,-0.5,-0.5, 0.0,-1.0, 0.0, 1.0, 0.5, 0.0, 1.0},//22: front bottom right
+    {-0.5,-0.5,-0.5, 0.0,-1.0, 0.0, 1.0, 0.5, 0.0, 1.0} //23: front bottom left
 };
 
 const GLubyte indices[36] = {
+    //front
     0, 1, 2, 2, 3, 0,
-    1, 4, 7, 7, 2, 1,
+    //left
     4, 5, 6, 6, 7, 4,
-    5, 0, 3, 3, 6, 5,
-    6, 3, 2, 2, 7, 6,
-    0, 5, 4, 4, 1, 0
+    //back
+    8, 9, 10, 10, 11, 8,
+    //right
+    12, 13, 14, 14, 15, 12,
+    //top
+    16, 17, 18, 18, 19, 16,
+    //bottom
+    20, 21, 22, 22, 23, 20
 };
 
 GLfloat matrix[4][4] = {
@@ -152,7 +180,7 @@ void Space::LoadBuffer()
     glGenVertexArrays(1, vertexArrays);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, 8 * 7 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 24 * 10 * sizeof(GLfloat), cube, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(GLubyte), indices, GL_STATIC_DRAW);
@@ -174,8 +202,8 @@ void Space::Render()
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers[0]);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), 0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (const GLvoid*) (3 * sizeof(GLfloat)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), 0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(GLfloat), (const GLvoid*) (6 * sizeof(GLfloat)));
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffers[0]);
 
